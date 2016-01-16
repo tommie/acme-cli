@@ -69,7 +69,7 @@ func TestProcSolverSolve(t *testing.T) {
 	}{
 		{
 			name: "none",
-			bin:  "/bin/sh",
+			bin:  "/bin/bash",
 			cmd:  `awk -F$'\t' 'BEGIN { OFS = FS; } !$0 { exit(0); } { print $1, $3; }'`,
 			cs:   nil,
 
@@ -77,7 +77,7 @@ func TestProcSolverSolve(t *testing.T) {
 		},
 		{
 			name: "two",
-			bin:  "/bin/sh",
+			bin:  "/bin/bash",
 			cmd:  `awk -F$'\t' 'BEGIN { OFS = FS; } !$0 { exit(0); } { print $1, $3; }'`,
 			cs: []protocol.Challenge{
 				&protocol.DNS01Challenge{Type: protocol.ChallengeDNS01, Token: "token"},
@@ -99,7 +99,7 @@ func TestProcSolverSolve(t *testing.T) {
 		},
 		{
 			name: "fail-eof",
-			bin:  "/bin/sh",
+			bin:  "/bin/bash",
 			cmd:  `awk -F$'\t' '!$0 { exit(0); }'`,
 			cs: []protocol.Challenge{
 				&protocol.DNS01Challenge{Type: protocol.ChallengeDNS01, Token: "token"},
@@ -109,7 +109,7 @@ func TestProcSolverSolve(t *testing.T) {
 		},
 		{
 			name: "fail-type",
-			bin:  "/bin/sh",
+			bin:  "/bin/bash",
 			cmd:  `awk -F$'\t' 'BEGIN { OFS = FS; } !$0 { exit(0); } { print "http-01", $3; }'`,
 			cs: []protocol.Challenge{
 				&protocol.DNS01Challenge{Type: protocol.ChallengeDNS01, Token: "token"},
