@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# System test for acmeclient. This requires Boulder running in a
+# Docker container called "boulder" and using a bridge network called
+# the same.
+#
+# NOTE: We run the entire test inside a Docker container so we can
+# start solvers without interfering with the host system.
+#
+
+set -e
+set -o pipefail
+
+case "$ACME_MODE" in
+'')
+    # Started manually. Start in Docker.
+    # TODO: Building outside of the container isn't pretty,
+    # but Debian jessie only has Go 1.3.
+    go build -o "$(dirname "$0")/acmeclient" github.com/tommie/acme-cli/acmeclient
+    docker build --force-rm \
+	   -t acmeclient_test_httpd \
+	   -f "$(dirname "$0")/../acmeclient/test/Dockerfile" \
+	   "$(dirname "$0")/.."
+    solvercont=$(docker run -d \
+			--net boulder \
+			--name acmeclient-test-httpd \
+			acmeclient_test_httpd)
+    trap "docker rm -f '$solvercont' >/dev/null" EXIT
+    # Docker containers don't have their hostname in /etc/hosts,
+    # just the container names so set ACME_SOLVER_HOST explicitly...
+    docker exec "$solvercont" env \
+	   ACME_MODE=docker \
+	   ACME_SOLVER_HOST=acmeclient-test-httpd.boulder \
+	   /usr/local/bin/acmeclient_test "$@"
+    exit
+    ;;
+docker)
+    # Started in Docker. Continue below.
+    :
+    ;;
+*)
+    echo "$(basename "$0"): unknown ACME_MODE: $ACME_MODE" >&2
+    exit 1
+    ;;
+esac
+
+tmpdir=$(mktemp -d --tmpdir acmeclient_test.XXXXXXXXXX)
+trap "rm -fr '$tmpdir'" EXIT
+
+KEY=$tmpdir/myaccount.key
+REG=$tmpdir/myaccount.txt
+CSR=$tmpdir/mycert.csr
+CERTKEY=$tmpdir/mycert.key
+CERTBUNDLE=$tmpdir/mybundle.pem
+
+client() {
+    /usr/local/bin/acmeclient -dir=http://boulder:4000/directory "$@"
+}
+
+
+# newreg
+openssl genrsa -out "$KEY" 2048
+client -key="$KEY" newreg -contact "$USER@example.com" | tee "$REG"
+reg=$(sed -e 's/^URI: *\(.*\)/\1/ p ; d' <"$REG")
+tos=$(sed -e 's/^Terms-Of-Service: *\(.*\)/\1/ p ; d' <"$REG")
+
+# updatereg
+client -reg="$reg" -key="$KEY" -agreement="$tos" updatereg | tee "$REG.update"
+
+# reg
+client -reg="$reg" -key="$KEY" reg | tee "$REG.get"
+
+# issuecert
+openssl req -new -sha256 -nodes -batch -subj "/CN=${ACME_SOLVER_HOST:-$(hostname -f)}" -newkey rsa:2048 -keyout "$CERTKEY" -outform DER -out "$CSR"
+
+client -reg="$reg" -key="$KEY" \
+       -certformat=chain:pem \
+       issuecert "$CSR" /usr/local/bin/apachesolver | tee "$CERTBUNDLE"
+cert=$(sed -e 's/^Location: *\(.*\)/\1/ p ; d' <"$CERTBUNDLE" | head -n1)
+
+# certs
+client -reg="$reg" -key="$KEY" -certformat=der certs "$cert" >"$CERTBUNDLE.der"
+
+# revokecert
+client -reg="$reg" -key="$KEY" revokecert "$CERTBUNDLE.der"
