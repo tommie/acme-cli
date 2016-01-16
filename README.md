@@ -190,7 +190,7 @@ the entire CA chain as a PEM file.
 
 The solver command is executed with environment variables
 
-* `ACME_MODE={cansolve, solve}`
+* `ACME_MODE={cost, solve}`
   Indicating the mode of operation. See below.
 * `ACME_ACCOUNT_JWK=<JWK>`
   Being the base64-encoded JSON web key for the current
@@ -210,7 +210,7 @@ All base64 data use the URL-safe character set in RFC 4648. All CSV
 records use tab as the field separator and new-line as the record
 separator.
 
-Mode `cansolve` should compute a solving cost for all the challenges
+Mode `cost` should compute a solving cost for all the challenges
 combined. It writes the (64-bit float) cost to stdout if it can solve
 all challenges, and nothing if it cannot solve them.
 

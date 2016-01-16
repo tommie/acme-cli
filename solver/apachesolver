@@ -45,7 +45,7 @@ elif type -p mawk >/dev/null; then
 fi
 
 case "$ACME_MODE" in
-cansolve)
+cost)
   # Read challenge records up until the first empty line.
   # Writes cost on success, and nothing if we cannot solve all challenges.
   awk -F$'\t' '

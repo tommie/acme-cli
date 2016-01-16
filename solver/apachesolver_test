@@ -6,8 +6,8 @@
 set -e
 apachesolver=$(dirname "$0")/apachesolver
 
-test-cansolve() {
-  local got=$(ACME_MODE=cansolve "$apachesolver" <<EOF
+test-cost() {
+  local got=$(ACME_MODE=cost "$apachesolver" <<EOF
 http-01	token
 
 EOF
@@ -17,7 +17,7 @@ EOF
     fatalf "[http-01] apachesolver: got '%s', want '%s'" "$got" "$want"
   fi
   
-  local got=$(ACME_MODE=cansolve "$apachesolver" <<EOF
+  local got=$(ACME_MODE=cost "$apachesolver" <<EOF
 http-01	token
 tls-sni-01	token
 
@@ -28,7 +28,7 @@ EOF
     fatalf "[two types] apachesolver: got '%s', want '%s'" "$got" "$want"
   fi
   
-  local got=$(ACME_MODE=cansolve "$apachesolver" <<EOF
+  local got=$(ACME_MODE=cost "$apachesolver" <<EOF
 http-01	token
 dns-01	token
 

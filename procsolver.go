@@ -23,8 +23,8 @@ import (
 type SolverMode string
 
 const (
-	ModeCanSolve SolverMode = "cansolve"
-	ModeSolve    SolverMode = "solve"
+	ModeCost  SolverMode = "cost"
+	ModeSolve SolverMode = "solve"
 )
 
 // A ProcessSolver is an acme.Solver that uses a child process to
@@ -60,11 +60,11 @@ func NewProcessSolver(accKey *jose.JsonWebKey, name string, argv []string, attr 
 
 // Cost computes the cost of solving the challenges.
 //
-// It runs the solver in ModeCanSolve, feeds the challenges as CSV
+// It runs the solver in ModeCost, feeds the challenges as CSV
 // records and expects a single float64 on stdout. If stdout is empty,
 // it is assumed the challenges cannot be solved together.
 func (s *ProcessSolver) Cost(cs []protocol.Challenge) (cost float64, errRet error) {
-	p, r, stop, err := s.start(cs, ModeCanSolve)
+	p, r, stop, err := s.start(cs, ModeCost)
 	if err != nil {
 		return 0, fmt.Errorf("starting solver %q: %v", s.name, err)
 	}
