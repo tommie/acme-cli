@@ -69,7 +69,7 @@ func (s *ProcessSolver) Cost(cs []protocol.Challenge) (cost float64, errRet erro
 		return 0, fmt.Errorf("starting solver %q: %v", s.name, err)
 	}
 	defer func() {
-		if err := stop(); err != nil {
+		if err := stop(); err != nil && errRet == nil {
 			errRet = err
 		}
 	}()
