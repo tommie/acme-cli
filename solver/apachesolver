@@ -107,7 +107,7 @@ EOF
 	  openssl req \
 	      -x509 -new -batch -nodes \
 	      -config "$opensslconf" \
-	      -days 1 -subj "/CN=$(hostname -f)" \
+	      -days 1 -subj "/" \
 	      -key "$key" \
 	      -outform PEM -out "$tmpdir/$name.cert"
           cat <<EOF
