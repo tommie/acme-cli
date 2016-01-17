@@ -1,16 +1,13 @@
 package acmecli
 
 import (
-	"crypto"
 	"encoding/base64"
 	"encoding/csv"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/square/go-jose"
@@ -304,15 +301,7 @@ func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JsonWebKey
 			return err
 		}
 		rec := []string{string(cc.GetType()), cc.Token, ka}
-		z := ka
-		h := crypto.SHA256.New()
-		for i := 0; i < cc.N; i++ {
-			h.Reset()
-			h.Write([]byte(z))
-			// EncodeToString casing is undefined. https://github.com/golang/go/issues/11254
-			z = strings.ToLower(hex.EncodeToString(h.Sum(nil)))
-			rec = append(rec, strings.Join([]string{z[:32], z[32:], protocol.TLSSNI01Suffix}, "."))
-		}
+		rec = append(rec, protocol.TLSSNI01Names(ka, cc.N)...)
 		return w.Write(rec)
 
 	default:
