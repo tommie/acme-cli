@@ -1,0 +1,2 @@
+// +build ignore+
+package solver
