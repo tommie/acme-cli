@@ -13,8 +13,8 @@ import (
 	"path/filepath"
 
 	"github.com/square/go-jose"
-	"github.com/tommie/acme-go"
 	"github.com/tommie/acme-cli"
+	"github.com/tommie/acme-go"
 )
 
 var (
@@ -96,7 +96,7 @@ func run(cmd string, args []string) (int, error) {
 		if err != nil {
 			return 2, err
 		}
-		s:= acmecli.NewProcessSolver(&jose.JsonWebKey{Key: key}, args[1], args[2:], nil)
+		s := acmecli.NewProcessSolver(&jose.JsonWebKey{Key: key}, args[1], args[2:], nil)
 		if err := issueCertificate(cw, acc, args[0], s); err != nil {
 			return 10, err
 		}
