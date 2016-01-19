@@ -29,6 +29,7 @@ var (
 )
 
 func main() {
+	flag.CommandLine.Usage = func() { showUsage(os.Stdout) }
 	flag.Parse()
 
 	if flag.NArg() < 1 {
