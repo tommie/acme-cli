@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io"
@@ -313,6 +314,10 @@ func revokeCertificate(acc *acme.ClientAccount, path string) error {
 	bs, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
+	}
+
+	if b, _ := pem.Decode(bs); b != nil && b.Type == "CERTIFICATE" {
+		bs = b.Bytes
 	}
 
 	return acc.RevokeCertificate(bs)
