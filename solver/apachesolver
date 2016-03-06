@@ -23,7 +23,7 @@ challenge_dir=${ACME_CHALLENGE_DIR:-/var/www/localhost/htdocs/.well-known/acme-c
 
 # A configuration file included by Apache. This is normally empty, but
 # is populated to solve tls-sni-01.
-config_file=${ACME_CONFIG_FILE:-/etc/apache/acmeclient.conf}
+config_file=${ACME_CONFIG_FILE:-/etc/apache2/acmeclient.conf}
 
 # Program to execute with argument "reload" to reload Apache configuration.
 apache2ctl=${ACME_APACHE2CTL:-apache2ctl}
