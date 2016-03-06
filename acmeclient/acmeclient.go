@@ -239,6 +239,10 @@ func issueCertificate(cw certWriter, acc *acme.ClientAccount, path string, solve
 		return err
 	}
 
+	if b, _ := pem.Decode(csr); b != nil && b.Type == "CERTIFICATE REQUEST" {
+		csr = b.Bytes
+	}
+
 	c, err := acme.NewCertificateIssuer(acc).AuthorizeAndIssue(csr, solver)
 	if err != nil {
 		return err
