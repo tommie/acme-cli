@@ -220,8 +220,8 @@ func showRegistration(f io.Writer, reg *acme.Registration) error {
 		fmt.Fprintln(f, "Contact: ", uri)
 	}
 
-	if reg.AgreementURI != reg.TermsOfServiceURI {
-		fmt.Fprintln(f, "Terms-Of-Service: ", reg.TermsOfServiceURI)
+	fmt.Fprintln(f, "Terms-Of-Service: ", reg.TermsOfServiceURI)
+	if reg.AgreementURI != "" {
 		fmt.Fprintln(f, "Agreement: ", reg.AgreementURI)
 	}
 
