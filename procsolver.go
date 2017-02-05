@@ -73,6 +73,7 @@ func (s *ProcessSolver) Cost(cs []protocol.Challenge) (cost float64, errRet erro
 
 	cr := csv.NewReader(r)
 	cr.Comma = '\t'
+	cr.FieldsPerRecord = -1
 	cost, err = readCost(cr)
 	if err == io.EOF {
 		return 0, acme.ErrUnsolvable
@@ -122,6 +123,7 @@ func (s *ProcessSolver) Solve(cs []protocol.Challenge) ([]protocol.Response, fun
 
 	cr := csv.NewReader(r)
 	cr.Comma = '\t'
+	cr.FieldsPerRecord = -1
 	resps, err := readResponses(cr, cs)
 	if err != nil {
 		p.Kill()
