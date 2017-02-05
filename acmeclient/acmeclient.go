@@ -97,7 +97,7 @@ func run(cmd string, args []string) (int, error) {
 		if err != nil {
 			return 2, err
 		}
-		s := acmecli.NewProcessSolver(&jose.JsonWebKey{Key: key}, args[1], args[2:], nil)
+		s := acmecli.NewProcessSolver(&jose.JsonWebKey{Key: key}, args[1], args[1:], nil)
 		if err := issueCertificate(cw, acc, args[0], s); err != nil {
 			return 10, err
 		}
