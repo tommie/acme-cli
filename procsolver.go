@@ -281,7 +281,7 @@ func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JsonWebKey
 		if err != nil {
 			return err
 		}
-		return w.Write([]string{string(cc.GetType()), cc.Token, ka})
+		return w.Write([]string{string(cc.GetType()), cc.Token, ka, protocol.DNS01TXTRecord(ka)})
 
 	case *protocol.HTTP01Challenge:
 		ka, err := protocol.KeyAuthz(cc.Token, accKey)

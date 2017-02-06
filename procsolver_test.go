@@ -221,7 +221,7 @@ func TestWriteChallenge(t *testing.T) {
 				Token: "token",
 			},
 
-			want: []string{"dns-01", "token", "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y"},
+			want: []string{"dns-01", "token", "token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y", "xrUFJ2TvB12Or6QYaPuOiB71Z7o_SgchqN1jFTyKB54"},
 		},
 		{
 			in: &protocol.HTTP01Challenge{
