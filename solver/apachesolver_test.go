@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/square/go-jose"
 	"github.com/tommie/acme-cli"
 	"github.com/tommie/acme-go"
 	"github.com/tommie/acme-go/protocol"
+	"gopkg.in/square/go-jose.v2"
 )
 
 func TestApacheSolverCost(t *testing.T) {
@@ -133,8 +133,8 @@ var (
 )
 
 // mustUnmarshalJWK takes a JSON string and unmarshals the key. Panics on error.
-func mustUnmarshalJWK(s string) *jose.JsonWebKey {
-	ret := &jose.JsonWebKey{}
+func mustUnmarshalJWK(s string) *jose.JSONWebKey {
+	ret := &jose.JSONWebKey{}
 	if err := json.Unmarshal([]byte(s), ret); err != nil {
 		panic(err)
 	}

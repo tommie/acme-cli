@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/square/go-jose"
 	"github.com/tommie/acme-go"
 	"github.com/tommie/acme-go/protocol"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // A SolverMode is an identifier passed in the ACME_MODE environment
@@ -31,7 +31,7 @@ const (
 //
 // The parent communicates to the child via environment variables,
 // stdin and stdout. ACME_MODE is one of the SolverMode
-// constants. ACME_ACCOUNT_JWK is a base64-encoded jose.JsonWebKey.
+// constants. ACME_ACCOUNT_JWK is a base64-encoded jose.JSONWebKey.
 //
 // For stdin and stdout, CSV with new-line (record) and tab (field)
 // separators are used. stdin receives challenges where the first
@@ -40,7 +40,7 @@ const (
 //
 // A non-zero exit code will cause the solver to return failure.
 type ProcessSolver struct {
-	accKey *jose.JsonWebKey
+	accKey *jose.JSONWebKey
 	name   string
 	argv   []string
 	attr   os.ProcAttr
@@ -48,7 +48,7 @@ type ProcessSolver struct {
 
 // NewProcessSolver creates a new process solver. name, argv and attr
 // follow the os.StartProcess semantics.
-func NewProcessSolver(accKey *jose.JsonWebKey, name string, argv []string, attr *os.ProcAttr) *ProcessSolver {
+func NewProcessSolver(accKey *jose.JSONWebKey, name string, argv []string, attr *os.ProcAttr) *ProcessSolver {
 	if attr == nil {
 		attr = &os.ProcAttr{}
 	}
@@ -298,7 +298,7 @@ func (s *ProcessSolver) start(cs []protocol.Challenge, mode SolverMode) (*os.Pro
 }
 
 // writeChallenge marshals the challenge and writes it as CSV.
-func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JsonWebKey) error {
+func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JSONWebKey) error {
 	switch cc := c.(type) {
 	case *protocol.DNS01Challenge:
 		ka, err := protocol.KeyAuthz(cc.Token, accKey)
