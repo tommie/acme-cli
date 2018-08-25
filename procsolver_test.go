@@ -176,6 +176,14 @@ func TestReadResponse(t *testing.T) {
 			},
 		},
 		{
+			in: []string{"tls-alpn-01"},
+
+			want: &protocol.TLSALPN01Response{
+				Resource: protocol.ResourceChallenge,
+				Type:     protocol.ChallengeTLSALPN01,
+			},
+		},
+		{
 			in: []string{"tls-sni-01", "keyauth"},
 
 			want: &protocol.TLSSNI01Response{
@@ -238,6 +246,17 @@ func TestWriteChallenge(t *testing.T) {
 			},
 
 			want: []string{"proofOfPossession-01", "aGVsbG8=", "d29ybGQ="},
+		},
+		{
+			in: &protocol.TLSALPN01Challenge{
+				Type:  protocol.ChallengeTLSALPN01,
+				Token: "token",
+			},
+
+			want: []string{
+				"tls-alpn-01",
+				"xrUFJ2TvB12Or6QYaPuOiB71Z7o_SgchqN1jFTyKB54=",
+			},
 		},
 		{
 			in: &protocol.TLSSNI01Challenge{

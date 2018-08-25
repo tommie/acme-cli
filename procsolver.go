@@ -96,6 +96,7 @@ func canSolve(cs []protocol.Challenge) error {
 		case *protocol.DNS01Challenge,
 			*protocol.HTTP01Challenge,
 			*protocol.Possession01Challenge,
+			*protocol.TLSALPN01Challenge,
 			*protocol.TLSSNI01Challenge:
 			// continue
 		default:
@@ -207,6 +208,12 @@ func readResponse(r *csv.Reader) (protocol.Response, error) {
 			return nil, err
 		}
 		return &protocol.Possession01Response{Resource: protocol.ResourceChallenge, Type: t, Authorization: protocol.JSONWebSignature(*jws)}, nil
+
+	case protocol.ChallengeTLSALPN01:
+		if len(rec) != 1 {
+			return nil, fmt.Errorf("expected one field for %s response, got %v", t, rec)
+		}
+		return &protocol.TLSALPN01Response{Resource: protocol.ResourceChallenge, Type: t}, nil
 
 	case protocol.ChallengeTLSSNI01:
 		if len(rec) != 2 {
@@ -320,6 +327,13 @@ func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JsonWebKey
 			rec = append(rec, base64.URLEncoding.EncodeToString(bs))
 		}
 		return w.Write(rec)
+
+	case *protocol.TLSALPN01Challenge:
+		bs, err := protocol.TLSALPN01Validation(cc.Token, accKey)
+		if err != nil {
+			return err
+		}
+		return w.Write([]string{string(cc.GetType()), base64.URLEncoding.EncodeToString(bs)})
 
 	case *protocol.TLSSNI01Challenge:
 		ka, err := protocol.KeyAuthz(cc.Token, accKey)
