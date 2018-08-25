@@ -9,8 +9,6 @@ MAINTAINER Tommie Gannert <tommie@gannert.se>
 ENV ACME_SOLVER_HTTP_PORT=80
 ENV ACME_SOLVER_HTTPS_PORT=443
 ENV ACME_CHALLENGE_DIR=/usr/local/apache2/htdocs/.well-known/acme-challenge
-ENV ACME_CONFIG_FILE=/usr/local/apache2/conf/extra/httpd-acmeclient.conf
-ENV ACME_APACHE2CTL=apache2ctl
 
 EXPOSE $ACME_SOLVER_HTTP_PORT
 EXPOSE $ACME_SOLVER_HTTPS_PORT
@@ -26,7 +24,4 @@ COPY solver/apachesolver /usr/local/bin/apachesolver
 # http-01
 RUN mkdir -p $ACME_CHALLENGE_DIR
 RUN sed -i -e '/^Listen 80\$/ d' /usr/local/apache2/conf/httpd.conf
-
-# tls-sni-01
 COPY ./acmeclient/test/httpd-apachesolver.conf /usr/local/apache2/conf/extra/httpd-vhosts.conf
-RUN touch $ACME_CONFIG_FILE

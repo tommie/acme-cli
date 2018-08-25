@@ -105,8 +105,7 @@ The files `ca-bundle.pem` and `cert.pem` now have what you want.
 ### apachesolver
 
 This is an example solver program for Apache web servers, written in
-Bash. It supports solving http-01 and tls-sni-01 challenges. http-01
-has cost 1 and tls-sni-01 has cost 2, so `acmeclient` will prefer http-01.
+Bash. It supports solving the http-01 challenge with cost 1.
 
 For http-01, a file is created in a directory, and Apache is expected
 to be configured to publish this directory as
@@ -125,36 +124,9 @@ This directory should normally be empty. It should be publicly
 accessible, and directory listings are disabled by `Options None`
 above.
 
-For tls-sni-01, an Apache configuration snippet is created that
-creates virtual hosts as instructed by the ACME server. Each virtual
-host has a self-signed certificate with a negotatiated common
-name. This must run over TLS on TCP port 443 and be publically
-accessible. It is a heavier challenge than http-01 since it needs to
-create a private key, self-signed certificates and reload Apache. The
-generated certificate has a validity of one day.
-
-The configuration snippet file must be included in your Apache
-configuration:
-
-```apache
-Include /etc/apache/acmeclient.conf
-```
-
-Remember to create an empty file to avoid errors while acmeclient is not
-running:
-
-```sh
-touch /etc/apache/acmeclient.conf
-```
-
-The `DocumentRoot` is set to `/var/empty` since only the TLS handshake
-is of interest.
-
 You can change the paths using environment variables:
 
 * `ACME_CHALLENGE_DIR` is where to store the http-01 files.
-* `ACME_CONFIG_FILE` is where to write tls-sni-01 configurations.
-* `ACME_APACHE2CTL` is the program to execute to reload Apache.
 
 See the top of the script file for more information.
 
@@ -204,7 +176,6 @@ is the challenge type. Remaining fields depend on the type:
 {dns-01, http-01}    <token> <key-authorization>
 proofOfPossession-01 <base64-DER-cert>...
 tls-alpn-01          <base64-validation-string> <hostname>
-tls-sni-01           <token> <key-authorization> <hostname>...
 ```
 
 All base64 data use the URL-safe character set in RFC 4648. All CSV
@@ -225,7 +196,6 @@ with the challenge type, and the formats are
 {dns-01, http-01}    <key-authorization>
 proofOfPossession-01 <compact-JWS-authorization>
 tls-alpn-01
-tls-sni-01           <key-authorization>
 ```
 
 Returning non-zero exit status causes the command to fail.

@@ -96,8 +96,7 @@ func canSolve(cs []protocol.Challenge) error {
 		case *protocol.DNS01Challenge,
 			*protocol.HTTP01Challenge,
 			*protocol.Possession01Challenge,
-			*protocol.TLSALPN01Challenge,
-			*protocol.TLSSNI01Challenge:
+			*protocol.TLSALPN01Challenge:
 			// continue
 		default:
 			return acme.ErrUnsolvable
@@ -215,12 +214,6 @@ func readResponse(r *csv.Reader) (protocol.Response, error) {
 		}
 		return &protocol.TLSALPN01Response{Resource: protocol.ResourceChallenge, Type: t}, nil
 
-	case protocol.ChallengeTLSSNI01:
-		if len(rec) != 2 {
-			return nil, fmt.Errorf("expected two fields for %s response, got %v", t, rec)
-		}
-		return &protocol.TLSSNI01Response{Resource: protocol.ResourceChallenge, Type: t, KeyAuthorization: rec[1]}, nil
-
 	default:
 		return nil, fmt.Errorf("unknown challenge response type: %v", rec)
 	}
@@ -334,15 +327,6 @@ func writeChallenge(w *csv.Writer, c protocol.Challenge, accKey *jose.JsonWebKey
 			return err
 		}
 		return w.Write([]string{string(cc.GetType()), base64.URLEncoding.EncodeToString(bs)})
-
-	case *protocol.TLSSNI01Challenge:
-		ka, err := protocol.KeyAuthz(cc.Token, accKey)
-		if err != nil {
-			return err
-		}
-		rec := []string{string(cc.GetType()), cc.Token, ka}
-		rec = append(rec, protocol.TLSSNI01Names(ka, cc.N)...)
-		return w.Write(rec)
 
 	default:
 		return fmt.Errorf("unknown challenge type: %#v", c)

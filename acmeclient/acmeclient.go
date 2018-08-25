@@ -171,8 +171,7 @@ Commands:
     Output certificates for the given URIs.
 
   revokecert <uri>
-    Revoke the given certificate.
-`)
+    Revoke the given certificate.`)
 }
 
 func showUsage(f io.Writer) {

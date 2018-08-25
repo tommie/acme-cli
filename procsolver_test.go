@@ -184,15 +184,6 @@ func TestReadResponse(t *testing.T) {
 			},
 		},
 		{
-			in: []string{"tls-sni-01", "keyauth"},
-
-			want: &protocol.TLSSNI01Response{
-				Resource:         protocol.ResourceChallenge,
-				Type:             protocol.ChallengeTLSSNI01,
-				KeyAuthorization: "keyauth",
-			},
-		},
-		{
 			in: []string{"something"},
 
 			err: fmt.Errorf("unknown challenge response type"),
@@ -256,21 +247,6 @@ func TestWriteChallenge(t *testing.T) {
 			want: []string{
 				"tls-alpn-01",
 				"xrUFJ2TvB12Or6QYaPuOiB71Z7o_SgchqN1jFTyKB54=",
-			},
-		},
-		{
-			in: &protocol.TLSSNI01Challenge{
-				Type:  protocol.ChallengeTLSSNI01,
-				Token: "token",
-				N:     2,
-			},
-
-			want: []string{
-				"tls-sni-01",
-				"token",
-				"token.luhDRvWTmOMLRwM2gMkTDdC88jVeIXo9Hm1r_Q6W41Y",
-				"c6b5052764ef075d8eafa41868fb8e88.1ef567ba3f4a0721a8dd63153c8a079e.acme.invalid",
-				"e3e1b3a270c6b5566cb36f9ca4f0939c.af758bfb4ced915161127327053fbbdb.acme.invalid",
 			},
 		},
 		{
