@@ -61,6 +61,10 @@ func NewProcessSolver(accKey *jose.JsonWebKey, name string, argv []string, attr 
 // records and expects a single float64 on stdout. If stdout is empty,
 // it is assumed the challenges cannot be solved together.
 func (s *ProcessSolver) Cost(cs []protocol.Challenge) (cost float64, errRet error) {
+	if err := canSolve(cs); err != nil {
+		return 0, err
+	}
+
 	p, r, stop, err := s.start(cs, ModeCost)
 	if err != nil {
 		return 0, fmt.Errorf("starting solver %q: %v", s.name, err)
@@ -83,6 +87,22 @@ func (s *ProcessSolver) Cost(cs []protocol.Challenge) (cost float64, errRet erro
 	}
 
 	return cost, nil
+}
+
+// canSolve returns whether all challenges are solvable.
+func canSolve(cs []protocol.Challenge) error {
+	for _, c := range cs {
+		switch c.(type) {
+		case *protocol.DNS01Challenge,
+			*protocol.HTTP01Challenge,
+			*protocol.Possession01Challenge,
+			*protocol.TLSSNI01Challenge:
+			// continue
+		default:
+			return acme.ErrUnsolvable
+		}
+	}
+	return nil
 }
 
 // readCost attempts to read a single field of a single CSV record and
@@ -116,6 +136,10 @@ func readCost(cr *csv.Reader) (float64, error) {
 // To stop the instance, call the returned stop function. This will
 // close stdin, signaling the child to exit.
 func (s *ProcessSolver) Solve(cs []protocol.Challenge) ([]protocol.Response, func() error, error) {
+	if err := canSolve(cs); err != nil {
+		return nil, nil, err
+	}
+
 	p, r, stop, err := s.start(cs, ModeSolve)
 	if err != nil {
 		return nil, nil, fmt.Errorf("starting solver %q: %v", s.name, err)
