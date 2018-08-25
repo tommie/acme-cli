@@ -203,6 +203,7 @@ is the challenge type. Remaining fields depend on the type:
 ```
 {dns-01, http-01}    <token> <key-authorization>
 proofOfPossession-01 <base64-DER-cert>...
+tls-alpn-01          <base64-validation-string> <hostname>
 tls-sni-01           <token> <key-authorization> <hostname>...
 ```
 
@@ -223,6 +224,7 @@ with the challenge type, and the formats are
 ```
 {dns-01, http-01}    <key-authorization>
 proofOfPossession-01 <compact-JWS-authorization>
+tls-alpn-01
 tls-sni-01           <key-authorization>
 ```
 
