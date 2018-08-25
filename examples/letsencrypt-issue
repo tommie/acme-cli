@@ -1,0 +1,148 @@
+#!/bin/bash
+#
+# Keep a certificate valid. To be called periodically on a server that keeps
+# the account key. This does not have to be the same as the server to request
+# the certificate for.
+#
+# 1) Install acmeclient and this file on the account server:
+#
+#      export GOPATH=$PWD
+#      go install github.com/tommie/acme-cli/acmeclient
+#      cp examples/letsencrypt-issue bin/
+#
+# 2) Install x509profile and an appropriate solver (e.g.
+#    solver/apachesolver) on the service host(s). The former needs write access
+#    to the private key and certificate of the services that use TLS. One way
+#    of doing this is creating a directory (e.g. /var/lib/letsencrypt-store/)
+#    which is writeable by only that user, and symlink to there from /etc/ssl/...
+#    Read access to the service private key should be very strict.
+#
+# 3) Set up SSH (or equivalent; see LE_RSH) so the account server can run
+#    x509profile on the service host(s). You will want
+#
+#      x509profile ssh
+#
+#    to be the only command allowed to run as the user that has access to
+#    the service keys. With OpenSSH, you can do this using
+#    'command="x509profile ssh" ...' in ~/.ssh/authorized_keys. See man sshd(8).
+#
+# 4) Add to Cron or similar as a user that can SSH to the service host(s). This
+#    will run once a day, and mostly do nothing:
+#
+#      35 10 * * * env ... $PWD/letsencrypt-issue
+#
+# 5) Configure this file, using environment variables. x509profile is configured
+#    using profile files.
+#
+
+set -e
+set -o pipefail
+
+# Path to the service private key to be certified, in PEM format.
+LE_SERVICE_KEY=${LE_SERVICE_KEY:-server.key}
+
+# Path to the output service certificate (PEM format).
+LE_SERVICE_CERT=${LE_SERVICE_CERT:-server.crt}
+
+# Path to the output service CA certificate bundle (PEM format).
+LE_SERVICE_CA_CERTS=${LE_SERVICE_CA_CERTS:-ca.crt}
+
+# Path to the account key in PEM format.
+LE_ACCOUNT_KEY=${LE_ACCOUNT_KEY:-$HOME/.config/acme/account.key}
+
+# Path to the registration information output by "acmeclient newreg".
+LE_REG=${LE_REG:-$HOME/.config/acme/reg.txt}
+
+# Request a new certificate if the current is this close to expire, in seconds.
+# Default is three weeks.
+LE_TIME_MARGIN=${LE_TIME_MARGIN:-$((3*7*24*3600))}
+
+# The command to use to communicate with LE_SERVICE_HOST. The hostname
+# and program will be appended to this command. Run through "sh -c".
+LE_SOLVER=${LE_SOLVER:-}
+
+# The ACME directory URL.
+LE_DIR=${LE_DIR:-https://acme-v01.api.letsencrypt.org/directory}
+
+# Program to execute to reload certificates. Run through "sh -c".
+LE_RELOAD=${LE_RELOAD:-apache2ctl reload}
+
+# Program locations.
+acmeclient=acmeclient
+
+
+progname=$(basename "$0")
+
+errmsg() {
+    echo "$progname: $*" >&2
+}
+
+infomsg() {
+    echo "$progname: $*"
+}
+
+# issue is called on the account server to issue a new certificate.
+issue() {
+    local csr
+    csr=$tmpdir/csr
+    openssl req -new -sha256 -nodes -batch -subj "/CN=${ACME_SOLVER_HOST:-$(hostname -f)}" -key "$LE_SERVICE_KEY" -outform DER -out "$csr"
+
+    infomsg "Requesting certificate..."
+    local certbundle
+    certbundle=$tmpdir/certbundle
+    "$acmeclient" -dir="$LE_DIR" -reg="$LE_REG" -key="$LE_ACCOUNT_KEY" \
+		  -certformat=chain:pem \
+		  issuecert "$csr" "$SHELL" -c "$LE_SOLVER" >"$certbundle"
+
+    sed -i -e '/^Location:.*/ d' "$certbundle"
+    if [ "x$LE_SERVICE_CA_CERTS" = "x$LE_SERVICE_CERT" ]; then
+	cp "$certbundle" "$LE_SERVICE_CERT"
+    else
+	openssl crl2pkcs7 -nocrl -certfile "$certbundle" | \
+            openssl pkcs7 -print_certs -out "$LE_SERVICE_CA_CERTS"
+	openssl x509 -in "$certbundle" -outform PEM -out "$LE_SERVICE_CERT"
+    fi
+
+    infomsg "Loading new certificates..."
+    "$SHELL" -c "$LE_RELOAD"
+}
+
+# try-issue checks the current certificate expiration and runs issue if needed.
+try-issue() {
+    local exp now
+    exp=$(date -d "$(openssl x509 -in "$LE_SERVICE_CERT" -noout -enddate | cut -d= -f2)" +%s)
+    now=$(date +%s)
+    if (( exp <= now + LE_TIME_MARGIN )); then
+	    issue
+    fi
+}
+
+main() {
+    if [ -z "$LE_SOLVER" ]; then
+	    errmsg "LE_SOLVER is empty."
+	    return 1
+    fi
+
+    if [ ! -r "$LE_SERVICE_KEY" ]; then
+	    errmsg "$LE_SERVICE_KEY is not readable."
+	    return 1
+    fi
+
+    if [ ! -r "$LE_ACCOUNT_KEY" ]; then
+	    errmsg "$LE_ACCOUNT_KEY is not readable."
+	    return 1
+    fi
+
+    if [ ! -r "$LE_REG" ]; then
+	    errmsg "$LE_REG is not readable."
+	    return 1
+    fi
+
+    tmpdir=$(mktemp -d --tmpdir letsencrypt-issue.XXXXXXXXXX)
+    trap "rm -fr '$tmpdir'" EXIT
+    chmod 700 "$tmpdir"
+
+    try-issue "$profile"
+}
+
+main "$@"

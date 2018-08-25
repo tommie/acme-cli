@@ -1,0 +1,78 @@
+#!/bin/bash -e
+
+# Number of bits when generating an account key.
+LE_KEY_BITS=${LE_KEY_BITS:-2048}
+
+# Path to the account key in PEM format.
+LE_ACCOUNT_KEY=${LE_ACCOUNT_KEY:-/etc/ssl/acme/account.key}
+
+# Path to the registration information output by "acmeclient newreg".
+LE_REG=${LE_REG:-/etc/ssl/acme/reg.txt}
+
+# URL of a terms-of-service you have already agreed to.
+LE_TOS_URL=${LE_TOS_URL:-}
+
+# The ACME directory URL.
+LE_DIR=${LE_DIR:-https://acme-v01.api.letsencrypt.org/directory}
+
+acmeclient=acmeclient
+
+progname=$(basename "$0")
+
+errmsg() {
+    echo "$progname: $*" >&2
+}
+
+main() {
+    if [ ! -d "$(dirname "$LE_ACCOUNT_KEY")" ]; then
+	errmsg "Directory $(dirname "$LE_ACCOUNT_KEY") does not exist."
+	exit 1
+    fi
+    
+    if [ ! -d "$(dirname "$LE_REG")" ]; then
+	errmsg "Directory $(dirname "$LE_REG") does not exist."
+	exit 1
+    fi
+    
+    if [ -e "$LE_REG" ]; then
+	errmsg "Registration file $LE_REG already exists."
+	exit 1
+    fi
+
+    if [ ! -d "$LE_ACCOUNT_KEY" ]; then
+	infomsg "Generating $LE_KEY_BITS RSA account key..."
+	openssl genrsa -out "$LE_ACCOUNT_KEY" "$LE_KEY_BITS"
+    fi
+
+    read -p "Account contact email address: " -i "$USER@$HOSTNAME" contact
+    "$acmeclient" -dir="$LE_DIR" -key="$LE_ACCOUNT_KEY" newreg -contact="$contact" -agreement="$LE_TOS_URL" >"$LE_REG.new"
+    
+    reg=$(sed -e 's/^URI: *\(.*\)/\1/ p ; d' <"$REG")
+    tos=$(sed -e 's/^Terms-Of-Service: *\(.*\)/\1/ p ; d' <"$REG")
+
+    if [ -n "$tos" ]; then
+	if [ "x$tos" != "x$LE_TOS_URL" ]; then
+	    local ans
+	    while true; do
+		read -p "Do you agree to the terms of service at $tos? [Yn]" -n1 ans
+		case "$ans" in
+		y|Y|"")
+		    break
+		    ;;
+		n|N)
+		    infomsg "Terminating."
+		    return 1
+		    ;;
+		*)
+		    ;;
+		esac
+	    done
+	fi
+
+	"$acmeclient" -dir="$LE_DIR" -reg="$reg.new" -key="$LE_ACCOUNT_KEY" -agreement="$tos" updatereg
+    fi
+    
+    mv "$LE_REG.new" "$LE_REG"
+}
+
+main
