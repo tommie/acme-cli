@@ -175,7 +175,7 @@ is the challenge type. Remaining fields depend on the type:
 ```
 {dns-01, http-01}    <token> <key-authorization>
 proofOfPossession-01 <base64-DER-cert>...
-tls-alpn-01          <base64-validation-string> <hostname>
+tls-alpn-01          <base64-validation-string>
 ```
 
 All base64 data use the URL-safe character set in RFC 4648. All CSV
